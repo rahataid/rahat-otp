@@ -4,7 +4,6 @@ const moment = require('moment');
 const Sequelize = require('sequelize');
 const mongoose = require('mongoose');
 
-const realmDb = config.get('realmDb');
 const { GoogleSpreadsheet } = require('google-spreadsheet');
 const { MailService } = require('@rumsan/core/services');
 const { db, getUnixTimestamp } = require('./index');
@@ -36,21 +35,6 @@ const Settings = db.define(
 );
 
 const tools = {
-  async syncWithRealm(data = []) {
-    if (!data.length) return;
-    data = data.map(d => ({
-      phone: d.phone,
-      pin: d.pin,
-      balance: parseInt(d.max_amount) || 0,
-      ward: d.ward || '',
-      name: d.name,
-      _partition: 'myPartition'
-    }));
-    await mongoose.connect(realmDb);
-    const mdb = mongoose.connection;
-    await mdb.collection('Backupotps').deleteMany({});
-    mdb.collection('Backupotps').insertMany(data);
-  },
 
   async syncFromGsheet() {
     const { docId, tabNumber } = config.get('services.gsheet');
@@ -70,7 +54,6 @@ const tools = {
     }));
     await Pin.destroy({ where: {} });
     await Pin.bulkCreate(data);
-    tools.syncWithRealm(data);
     const res = await Pin.count();
     MailService.send({
       to: config.get('adminEmail'),
