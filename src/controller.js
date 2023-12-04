@@ -24,12 +24,13 @@ module.exports = {
   /**
    * Get contract information from Rahat server
    */
-  async getContract() {
-    let res = await axios(`${rahatServer}/api/v1/app/contracts/Rahat`);
-    const { abi } = res.data;
-    res = await axios(`${rahatServer}/api/v1/app/settings`);
-    const contractAddress = res.data.agency.contracts.rahat;
-    return new ethers.Contract(contractAddress, abi, wallet);
+  async getContract(contractName = 'RahatClaim') {
+    const res = await axios(`${rahatServer}/api/v1/app/contracts/${contractName}`);
+    console.log({ res });
+    const { abi, address } = res.data;
+    // res = await axios(`${rahatServer}/api/v1/app/settings`);
+    // const contractAddress = res.data.agency.contracts.rahat;
+    return new ethers.Contract(address, abi, wallet);
   },
 
   /**
@@ -79,7 +80,7 @@ module.exports = {
 
   async contractListen() {
     currentContract = await this.getContract();
-    currentContract.on('ClaimedERC20', async (vendor, phone, amount) => {
+    currentContract.on('ClaimCreated', async (vendor, phone, amount) => {
       try {
         const otp = await this.getOtp(phone);
         if (!otp) return;
