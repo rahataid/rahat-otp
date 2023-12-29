@@ -20,13 +20,19 @@ const provider = new ethers.providers.WebSocketProvider(websocketProvider);
 const wallet = new ethers.Wallet(privateKey, provider);
 let currentContract = null;
 
+const api = axios.create({
+  baseURL: rahatServer,
+  headers: {
+    'otp-server': true
+  }
+});
+
 module.exports = {
   /**
    * Get contract information from Rahat server
    */
   async getContract(contractName = 'RahatClaim') {
-    const res = await axios(`${rahatServer}/api/v1/app/contracts/${contractName}`);
-    console.log({ res });
+    const res = await api.get(`/api/v1/app/contracts/${contractName}`);
     const { abi, address } = res.data;
     // res = await axios(`${rahatServer}/api/v1/app/settings`);
     // const contractAddress = res.data.agency.contracts.rahat;
@@ -97,7 +103,7 @@ module.exports = {
       }
     });
     console.log('----------------------------------------');
-    console.log(`Coontract: ${currentContract.address}`);
+    console.log(`Contract: ${currentContract.address}`);
     console.log(`Wallet: ${wallet.address}`);
     console.log('> Listening to events...');
     console.log('----------------------------------------');
