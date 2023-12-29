@@ -1,7 +1,8 @@
 #Rumsan
 play/
 sandbox/
-config/**
+config/
+config-temp
 temp/
 
 #allow sample config
