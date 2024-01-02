@@ -9,6 +9,7 @@ const pinService = require('./plugins/pin');
 const { syncFromGsheet, updateServerStartDate, getSqlitePinsCount, getLastStartDate } = require('./utils/tools');
 
 const mailConfig = require('../config/mail.json');
+const { id } = require('ethers/lib/utils');
 
 MailService.setConfig(mailConfig);
 
@@ -80,28 +81,58 @@ module.exports = {
     // return res.data;
   },
 
+  async addOtpToClaim(claimId, otp) {
+    console.log('OTP: ==>', otp);
+    console.log('============================');
+    const rahatClaim = await this.getContract('RahatClaim');
+    const otpHash = id(otp);
+    const expiryDate = Math.floor(Date.now() / 1000) + 86400;
+    await rahatClaim.addOtpToClaim(claimId, otpHash, expiryDate);
+    const finalClaimsState = await rahatClaim.claims(claimId);
+    return finalClaimsState;
+  },
+
   /**
    * Listen to blockchain events
    */
 
   async contractListen() {
     currentContract = await this.getContract();
-    currentContract.on('ClaimCreated', async (vendor, phone, amount) => {
-      try {
-        const otp = await this.getOtp(phone);
-        if (!otp) return;
-        await this.setHashToChain_ERC20(currentContract, vendor, phone.toString(), otp);
-        console.log({
-          vendor,
-          phone: phone?.toNumber(),
-          amount: amount?.toNumber(),
-          otp
-        });
-        this.sendMessage(phone, otp, amount);
-      } catch (e) {
-        console.log(e);
+    currentContract.on(
+      'ClaimCreated',
+      async (claimId, claimerAddress, claimeeAddress, tokenAddress, otpServer, amount) => {
+        try {
+          console.log({
+            msg: 'ClaimCreated',
+            claimId,
+            claimerAddress,
+            claimeeAddress,
+            tokenAddress,
+            otpServer,
+            amount
+          });
+
+          const {
+            data: { rows }
+          } = await api.get(`/api/v1/beneficiaries?walletAddress=${claimeeAddress.toLowerCase()}`);
+          const beneficiaryPhone = rows[0].phone;
+          const otp = await this.getOtp(beneficiaryPhone, otpServer);
+          const state = await this.addOtpToClaim(claimId, otp);
+          if (!otp) return;
+          this.sendMessage(beneficiaryPhone, otp, amount);
+          // if (!otp) return;
+          // // await this.setHashToChain_ERC20(currentContract, vendor, phone.toString(), otp);
+          // console.log({
+          //   vendor,
+          //   phone: phone?.toNumber(),
+          //   amount: amount?.toNumber(),
+          //   otp
+          // });
+        } catch (e) {
+          console.log(e);
+        }
       }
-    });
+    );
     console.log('----------------------------------------');
     console.log(`Contract: ${currentContract.address}`);
     console.log(`Wallet: ${wallet.address}`);
