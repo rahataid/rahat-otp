@@ -1,13 +1,7 @@
-FROM node:14.17.0-alpine3.13
-RUN apk add --update bash git curl
-#set working directory
+# Install dependencies only when needed
+FROM node:18-alpine3.17 AS devdeps
 WORKDIR /usr/src/app
-COPY . .
-#make script executable
-# RUN chmod +x wait-for-it.sh
-RUN chmod +x start-prod-server.sh
-#install packages
-RUN yarn
-#expose application working port
-# EXPOSE 3601 8558
-ENTRYPOINT ["./start-prod-server.sh"]
+COPY package.json yarn.lock ./
+RUN yarn install --production && yarn cache clean
+COPY . ./
+CMD ["yarn", "stage"]
