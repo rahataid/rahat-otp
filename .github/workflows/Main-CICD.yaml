@@ -1,12 +1,12 @@
-name: Stage CI/CD
+name: Main CI/CD
 on:
   push:
     branches:
-      - 'stage'
+      - 'main'
 
   pull_request:
     branches:
-      - 'stage'
+      - 'main'
 
 env:
   CI: false
@@ -35,4 +35,4 @@ jobs:
           context: .
           file: Dockerfile
           push: ${{ github.event_name == 'push' && 'true' || 'false' }}
-          tags: esatya/rahat-otp-server:stage2
+          tags: esatya/rahat-otp-server:main
