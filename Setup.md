@@ -128,7 +128,7 @@ const run = async () => {
 };
 
 const test = async () => {
-  console.log(await settings.findOne({ where: { key: 'statedOn' } }));
+  // console.log(await settings.findOne({ where: { key: 'statedOn' } }));
 };
 
 run();

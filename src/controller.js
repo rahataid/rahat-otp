@@ -9,6 +9,8 @@ const pinService = require('./plugins/pin');
 const { syncFromGsheet, updateServerStartDate, getSqlitePinsCount, getLastStartDate } = require('./utils/tools');
 
 const mailConfig = require('../config/mail.json');
+
+console.log(mailConfig)
 const { id } = require('ethers/lib/utils');
 
 MailService.setConfig(mailConfig);
@@ -16,6 +18,7 @@ MailService.setConfig(mailConfig);
 const rahatServer = config.get('rahat_server');
 const websocketProvider = config.get('blockchain.webSocketProvider');
 const privateKey = config.get('private_key');
+const { abi } = require('./abi.json')
 
 const provider = new ethers.providers.WebSocketProvider(websocketProvider);
 const wallet = new ethers.Wallet(privateKey, provider);
@@ -33,8 +36,10 @@ module.exports = {
    * Get contract information from Rahat server
    */
   async getContract(contractName = 'RahatClaim') {
-    const res = await api.get(`/api/v1/app/contracts/${contractName}`);
-    const { abi, address } = res.data;
+    // const res = await api.get(`/api/v1/app/contracts/${contractName}`);
+
+    const address = "0x2B539E5cAe0b01728BF6fFcE1F17aEbb0Adbd39c";
+    // const { abi, address } = res.data;
     // res = await axios(`${rahatServer}/api/v1/app/settings`);
     // const contractAddress = res.data.agency.contracts.rahat;
     return new ethers.Contract(address, abi, wallet);
@@ -69,15 +74,22 @@ module.exports = {
     if (phone.toString().slice(0, 3) === '999') return null;
     const message =
       createMessage(otp, amount) || `Please provide this code to vendor: ${otp}. (Transaction amount: ${amount})`;
-    if (phone.toString().slice(0, 4) === '9670') {
+    // if (phone.toString().slice(0, 4) === '9868') {
+    try {
       MailService.send({
-        to: `${phone.toString()}@mailinator.com`,
+        to: `rahat@mailinator.com`,
         subject: 'OTP',
         html: `OTP:${otp}`
       });
-      return null;
+
+      console.log("successfully sent mail")
+    } catch (error) {
+      console.log(error)
     }
-    return sms(phone.toString(), message);
+
+    return null;
+    // }
+    // return sms(phone.toString(), message);
     // return res.data;
   },
 
@@ -85,6 +97,7 @@ module.exports = {
     console.log('OTP: ==>', otp);
     console.log('============================');
     const rahatClaim = await this.getContract('RahatClaim');
+
     const otpHash = id(otp);
     const expiryDate = Math.floor(Date.now() / 1000) + 86400;
     await rahatClaim.addOtpToClaim(claimId, otpHash, expiryDate);
@@ -112,13 +125,15 @@ module.exports = {
             amount
           });
 
-          const {
-            data: { rows }
-          } = await api.get(`/api/v1/beneficiaries?walletAddress=${claimeeAddress.toLowerCase()}`);
-          const beneficiaryPhone = rows[0].phone;
+          // const {
+          //   data: { rows }
+          // } = await api.get(`/api/v1/beneficiaries?walletAddress=${claimeeAddress.toLowerCase()}`);
+
+          const beneficiaryPhone = '9868823984';
+
           const otp = await this.getOtp(beneficiaryPhone, otpServer);
-          const state = await this.addOtpToClaim(claimId, otp);
-          if (!otp) return;
+          // const state = await this.addOtpToClaim(claimId, otp);
+          // if (!otp) return;
           this.sendMessage(beneficiaryPhone, otp, amount);
           // if (!otp) return;
           // // await this.setHashToChain_ERC20(currentContract, vendor, phone.toString(), otp);
@@ -146,65 +161,65 @@ module.exports = {
   },
 
   async listen() {
-    await updateServerStartDate();
+    // await updateServerStartDate();
     await this.contractListen();
 
-    provider.on('pending', async txHash => {
-      const tx = await provider.getTransaction(txHash);
-      if (tx.to === wallet.address) {
-        const amount = ethers.utils.formatEther(tx.value);
+    // provider.on('pending', async txHash => {
+    //   const tx = await provider.getTransaction(txHash);
+    //   if (tx.to === wallet.address) {
+    //     const amount = ethers.utils.formatEther(tx.value);
 
-        try {
-          if (amount === '0.0067') {
-            MailService.send({
-              to: config.get('adminEmail'),
-              subject: 'Rahat OTP Server Commands',
-              html: `
-              Send these amount to ${wallet.address} to run following commands.<br />
-              0.0066 - Ping Test<br />
-              0.0068 - Gsheet PIN Sync<br />
-              0.0069 - Email Server Information<br />
-              `
-            });
-          }
+    //     try {
+    //       if (amount === '0.0067') {
+    //         MailService.send({
+    //           to: config.get('adminEmail'),
+    //           subject: 'Rahat OTP Server Commands',
+    //           html: `
+    //           Send these amount to ${wallet.address} to run following commands.<br />
+    //           0.0066 - Ping Test<br />
+    //           0.0068 - Gsheet PIN Sync<br />
+    //           0.0069 - Email Server Information<br />
+    //           `
+    //         });
+    //       }
 
-          if (amount === '0.0066') {
-            sms('9801109670', 'ping');
-          }
+    //       if (amount === '0.0066') {
+    //         sms('9868823984', 'ping');
+    //       }
 
-          if (amount === '0.0068') {
-            syncFromGsheet();
-          }
+    //       if (amount === '0.0068') {
+    //         syncFromGsheet();
+    //       }
 
-          if (amount === '0.0069') {
-            await this.contractStopListen();
-            await this.contractListen();
+    //       if (amount === '0.0069') {
+    //         await this.contractStopListen();
+    //         await this.contractListen();
 
-            const startInfo = await getLastStartDate();
-            MailService.send({
-              to: config.get('adminEmail'),
-              subject: 'Rahat OTP Server Information',
-              html: `Rahat contract address: ${currentContract.address}<br />
-            Server Wallet address: ${wallet.address}<br />
-            Blockchain network: ${config.get('blockchain.webSocketProvider')}<br />
-            SMS Service enabled: ${config.get('enabled')}<br />
-            SMS Service: ${config.get('sms_service')}<br />
-            Pin Service: ${config.get('pin_service')}<br />
-            Test OTP Pin: ${await this.getOtp('9801109670')}<br />
-            Default OTP Code: ${config.get('otp.defaultCode')}<br />
-            Total SQLLite Pin count: ${await getSqlitePinsCount()}<br />
-            Server Started on: ${startInfo.date} (${startInfo.duration})
-            `
-            }).then(e => {
-              console.log('email sent.');
-            });
-          }
-        } catch (e) {
-          console.log(e.message);
-        }
+    //         const startInfo = await getLastStartDate();
+    //         MailService.send({
+    //           to: config.get('adminEmail'),
+    //           subject: 'Rahat OTP Server Information',
+    //           html: `Rahat contract address: ${currentContract.address}<br />
+    //         Server Wallet address: ${wallet.address}<br />
+    //         Blockchain network: ${config.get('blockchain.webSocketProvider')}<br />
+    //         SMS Service enabled: ${config.get('enabled')}<br />
+    //         SMS Service: ${config.get('sms_service')}<br />
+    //         Pin Service: ${config.get('pin_service')}<br />
+    //         Test OTP Pin: ${await this.getOtp('9868823984')}<br />
+    //         Default OTP Code: ${config.get('otp.defaultCode')}<br />
+    //         Total SQLLite Pin count: 4<br />
+    //         Server Started on: ${startInfo.date} (${startInfo.duration})
+    //         `
+    //         }).then(e => {
+    //           console.log('email sent.');
+    //         });
+    //       }
+    //     } catch (e) {
+    //       console.log(e.message);
+    //     }
 
-        console.log('Command code:', amount);
-      }
-    });
+    //     console.log('Command code:', amount);
+    //   }
+    // });
   }
 };
