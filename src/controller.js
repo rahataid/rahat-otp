@@ -7,6 +7,7 @@ const { createMessage } = require('./plugins/template');
 const sms = require('./plugins/sms');
 const pinService = require('./plugins/pin');
 const { syncFromGsheet, updateServerStartDate, getSqlitePinsCount, getLastStartDate } = require('./utils/tools');
+const sendOtp = require('./utils/sendOtp')
 
 const mailConfig = require('../config/mail.json');
 
@@ -57,10 +58,10 @@ module.exports = {
    * Call contract function to store OTP hash in blockchain.
    * @param {string} payload data to create hash
    */
-  async setHashToChain_ERC20(contract, vendor, phone, otp) {
-    const timeToLive = 900;
+  async setHashToChain_ERC20(contract, claimId, otp) {
+    const timeToLive = 900000000000000;
     const otpHash = this.generateHash(otp);
-    return contract.approveERC20Claim(vendor, phone, otpHash, timeToLive);
+    return contract.addOtpToClaim(claimId, otpHash, timeToLive);
   },
 
   async getOtp(phone, vendor) {
@@ -70,27 +71,18 @@ module.exports = {
     return otp.toString();
   },
 
-  async sendMessage(phone, otp, amount) {
+  async sendMessage(phone, otp, amount, claimId) {
     if (phone.toString().slice(0, 3) === '999') return null;
     const message =
       createMessage(otp, amount) || `Please provide this code to vendor: ${otp}. (Transaction amount: ${amount})`;
-    // if (phone.toString().slice(0, 4) === '9868') {
     try {
-      MailService.send({
-        to: `rahat@mailinator.com`,
-        subject: 'OTP',
-        html: `OTP:${otp}`
-      });
-
-      console.log("successfully sent mail")
+      sendOtp('rahat@mailinator.com', otp)
+      console.log("successfully sent otp to mail and whatsapp")
     } catch (error) {
       console.log(error)
     }
 
     return null;
-    // }
-    // return sms(phone.toString(), message);
-    // return res.data;
   },
 
   async addOtpToClaim(claimId, otp) {
@@ -134,9 +126,10 @@ module.exports = {
           const otp = await this.getOtp(beneficiaryPhone, otpServer);
           // const state = await this.addOtpToClaim(claimId, otp);
           // if (!otp) return;
-          this.sendMessage(beneficiaryPhone, otp, amount);
-          // if (!otp) return;
-          // // await this.setHashToChain_ERC20(currentContract, vendor, phone.toString(), otp);
+          if (!otp) return;
+          await this.setHashToChain_ERC20(currentContract, claimId, otp);
+          this.sendMessage(beneficiaryPhone, otp, amount, claimId);
+
           // console.log({
           //   vendor,
           //   phone: phone?.toNumber(),
