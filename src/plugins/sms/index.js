@@ -1,7 +1,7 @@
 const config = require('config');
 const { MailService } = require('@rumsan/core/services');
 
-module.exports = async (phone, message) => {
+module.exports = async (phone, message, otp) => {
   if (config.has('debug_mode') && config.get('debug_mode')) {
     phone = `${phone}@mailinator.com`;
     MailService.send({
@@ -27,5 +27,5 @@ module.exports = async (phone, message) => {
   }
   console.log('SMS:', phone);
   const sms = require(`./${config.get('sms_service')}`);
-  return sms(phone.toString(), message);
+  return sms(phone.toString(), message, otp);
 };

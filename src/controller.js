@@ -6,8 +6,6 @@ const { MailService } = require('@rumsan/core/services');
 const { createMessage } = require('./plugins/template');
 const sms = require('./plugins/sms');
 const pinService = require('./plugins/pin');
-const { syncFromGsheet, updateServerStartDate, getSqlitePinsCount, getLastStartDate } = require('./utils/tools');
-const sendOtp = require('./utils/sendOtp')
 
 const mailConfig = require('../config/mail.json');
 
@@ -39,7 +37,7 @@ module.exports = {
   async getContract(contractName = 'RahatClaim') {
     // const res = await api.get(`/api/v1/app/contracts/${contractName}`);
 
-    const address = "0x2B539E5cAe0b01728BF6fFcE1F17aEbb0Adbd39c";
+    const address = config.get('contractToListen');
     // const { abi, address } = res.data;
     // res = await axios(`${rahatServer}/api/v1/app/settings`);
     // const contractAddress = res.data.agency.contracts.rahat;
@@ -71,13 +69,13 @@ module.exports = {
     return otp.toString();
   },
 
-  async sendMessage(phone, otp, amount, claimId) {
+  async sendMessage(phone, otp, amount) {
     if (phone.toString().slice(0, 3) === '999') return null;
     const message =
       createMessage(otp, amount) || `Please provide this code to vendor: ${otp}. (Transaction amount: ${amount})`;
     try {
-      sendOtp('rahat@mailinator.com', otp)
-      console.log("successfully sent otp to mail and whatsapp")
+      await sms(phone, message, otp);
+      console.log('successfully sent otp to mail and whatsapp')
     } catch (error) {
       console.log(error)
     }
@@ -117,25 +115,19 @@ module.exports = {
             amount
           });
 
-          // const {
-          //   data: { rows }
-          // } = await api.get(`/api/v1/beneficiaries?walletAddress=${claimeeAddress.toLowerCase()}`);
-
-          const beneficiaryPhone = '9868823984';
+          const {
+            data
+          } = await api.get(`/v1/beneficiaries/wallet/${claimeeAddress}`);
+          console.log({ phone: data?.data?.piiData?.phone });
+          const beneficiaryPhone = data?.data?.piiData?.phone;
 
           const otp = await this.getOtp(beneficiaryPhone, otpServer);
-          // const state = await this.addOtpToClaim(claimId, otp);
-          // if (!otp) return;
+          console.log(otp)
+          const state = await this.addOtpToClaim(claimId, otp);
+          console.log('state', state);
           if (!otp) return;
-          await this.setHashToChain_ERC20(currentContract, claimId, otp);
-          this.sendMessage(beneficiaryPhone, otp, amount, claimId);
 
-          // console.log({
-          //   vendor,
-          //   phone: phone?.toNumber(),
-          //   amount: amount?.toNumber(),
-          //   otp
-          // });
+          this.sendMessage(beneficiaryPhone, otp, amount);
         } catch (e) {
           console.log(e);
         }
