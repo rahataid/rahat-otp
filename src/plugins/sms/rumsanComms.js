@@ -6,10 +6,9 @@ const apiUrl = config.get('services.rumsanComms.url');
 const contentSid = config.get('services.rumsanComms.contentSid');
 const type = config.get('services.rumsanComms.type');
 
-
 module.exports = async (phone, message, otp) => {
   const requestData = {
-    phone: `+977${phone}`,
+    phone,
     type,
     contentSid,
     contentVariables: {
@@ -17,7 +16,7 @@ module.exports = async (phone, message, otp) => {
     },
     body: message
   }
-  axios.post(`${apiUrl}/api/v1/message-sender/send-otp`, requestData)
+  axios.post(`${apiUrl}/v1/message-sender/send-otp`, requestData)
     .then(response => {
       console.log('Response from API:', response.data);
     })

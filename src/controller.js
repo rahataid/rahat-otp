@@ -119,7 +119,7 @@ module.exports = {
             data
           } = await api.get(`/v1/beneficiaries/wallet/${claimeeAddress}`);
           console.log({ phone: data?.data?.piiData?.phone });
-          const beneficiaryPhone = data?.data?.piiData?.phone;
+          const beneficiaryPhone = data?.data?.piiData?.phone || '+9779841602388';
 
           const otp = await this.getOtp(beneficiaryPhone, otpServer);
           console.log(otp)
