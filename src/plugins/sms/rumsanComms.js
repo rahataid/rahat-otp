@@ -16,7 +16,7 @@ module.exports = async (phone, message, otp) => {
     },
     body: message
   }
-  axios.post(`${apiUrl}/v1/message-sender/send-otp`, requestData)
+  axios.post(`${apiUrl}/v1/message-sender/send`, requestData)
     .then(response => {
       console.log('Response from API:', response.data);
     })
