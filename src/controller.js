@@ -90,7 +90,8 @@ module.exports = {
 
     const otpHash = id(otp);
     const expiryDate = Math.floor(Date.now() / 1000) + 86400;
-    await rahatClaim.addOtpToClaim(claimId, otpHash, expiryDate);
+    console.log({ claimId, otpHash, expiryDate });
+    await rahatClaim.addOtpToClaim(claimId, otpHash, expiryDate, { gasPrice: 1916250000 });
     const finalClaimsState = await rahatClaim.claims(claimId);
     return finalClaimsState;
   },
@@ -111,8 +112,7 @@ module.exports = {
             claimerAddress,
             claimeeAddress,
             tokenAddress,
-            otpServer,
-            amount
+            otpServer
           });
 
           const {
@@ -127,7 +127,7 @@ module.exports = {
           console.log('state', state);
           if (!otp) return;
 
-          this.sendMessage(beneficiaryPhone, otp, amount);
+          this.sendMessage(beneficiaryPhone, otp);
         } catch (e) {
           console.log(e);
         }
