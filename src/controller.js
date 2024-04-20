@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
 const config = require('config');
 const axios = require('axios');
-const ethers = require('ethers');
+const { ethers, id } = require('ethers');
 const { MailService } = require('@rumsan/core/services');
 const { createMessage } = require('./plugins/template');
 const sms = require('./plugins/sms');
@@ -10,16 +10,15 @@ const pinService = require('./plugins/pin');
 const mailConfig = require('../config/mail.json');
 
 console.log(mailConfig)
-const { id } = require('ethers/lib/utils');
 
 MailService.setConfig(mailConfig);
 
 const rahatServer = config.get('rahat_server');
 const websocketProvider = config.get('blockchain.webSocketProvider');
 const privateKey = config.get('private_key');
-const { abi } = require('./abi.json')
+const { abi } = require('./abi.json');
 
-const provider = new ethers.providers.WebSocketProvider(websocketProvider);
+const provider = new ethers.WebSocketProvider(websocketProvider);
 const wallet = new ethers.Wallet(privateKey, provider);
 let currentContract = null;
 
@@ -49,7 +48,7 @@ module.exports = {
    * @param {string} payload data to create hash
    */
   generateHash(payload) {
-    return ethers.utils.keccak256(ethers.utils.toUtf8Bytes(payload));
+    return ethers.keccak256(ethers.utils.toUtf8Bytes(payload));
   },
 
   /**
@@ -87,11 +86,10 @@ module.exports = {
     console.log('OTP: ==>', otp);
     console.log('============================');
     const rahatClaim = await this.getContract('RahatClaim');
-
     const otpHash = id(otp);
     const expiryDate = Math.floor(Date.now() / 1000) + 86400;
     console.log({ claimId, otpHash, expiryDate });
-    await rahatClaim.addOtpToClaim(claimId, otpHash, expiryDate, { gasPrice: 12016250000 });
+    await rahatClaim.addOtpToClaim(claimId, otpHash, expiryDate);
     const finalClaimsState = await rahatClaim.claims(claimId);
     return finalClaimsState;
   },
@@ -102,6 +100,7 @@ module.exports = {
 
   async contractListen() {
     currentContract = await this.getContract();
+    console.log({ currentContract })
     currentContract.on(
       'ClaimCreated',
       async (claimId, claimerAddress, claimeeAddress, tokenAddress, otpServer, amount) => {
@@ -127,14 +126,14 @@ module.exports = {
           console.log('state', state);
           if (!otp) return;
 
-          this.sendMessage(beneficiaryPhone, otp);
+          // this.sendMessage(beneficiaryPhone, otp);
         } catch (e) {
           console.log(e);
         }
       }
     );
     console.log('----------------------------------------');
-    console.log(`Contract: ${currentContract.address}`);
+    console.log(`Contract: ${currentContract.target}`);
     console.log(`Wallet: ${wallet.address}`);
     console.log('> Listening to events...');
     console.log('----------------------------------------');

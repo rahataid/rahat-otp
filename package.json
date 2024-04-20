@@ -28,7 +28,7 @@
     "@rumsan/core": "^1.0.601",
     "axios": "^0.20.0",
     "config": "^3.3.2",
-    "ethers": "^5.0.14",
+    "ethers": "6.12.0",
     "google-spreadsheet": "^3.3.0",
     "moment": "^2.29.4",
     "mongoose": "^6.6.0",
