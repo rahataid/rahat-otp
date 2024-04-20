@@ -125,8 +125,7 @@ module.exports = {
           const state = await this.addOtpToClaim(claimId, otp);
           console.log('state', state);
           if (!otp) return;
-
-          // this.sendMessage(beneficiaryPhone, otp);
+          this.sendMessage(beneficiaryPhone, otp);
         } catch (e) {
           console.log(e);
         }
