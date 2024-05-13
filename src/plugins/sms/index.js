@@ -4,7 +4,6 @@ const toMail = config.get('toMail')||'anupama.rumsan@gmail.com'
 
 module.exports = async (phone, message, otp,expiryTime) => {
   if (config.has('debug_mode') && config.get('debug_mode')) {
-    toMail = `${toMail}`;
     MailService.send({
       to: toMail,
       subject: 'El SMS: Backup OTP',
