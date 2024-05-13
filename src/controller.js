@@ -18,7 +18,8 @@ const websocketProvider = config.get('blockchain.webSocketProvider');
 const privateKey = config.get('private_key');
 const { abi } = require('./abi.json');
 
-const provider = new ethers.WebSocketProvider(websocketProvider);
+const provider = new ethers.WebSocketProvider
+(websocketProvider);
 const wallet = new ethers.Wallet(privateKey, provider);
 let currentContract = null;
 
@@ -68,12 +69,12 @@ module.exports = {
     return otp.toString();
   },
 
-  async sendMessage(phone, otp, amount) {
+  async sendMessage(phone, otp, expiryTime) {
     if (phone.toString().slice(0, 3) === '999') return null;
     const message =
-      createMessage(otp, amount) || `Please provide this code to vendor: ${otp}. (Transaction amount: ${amount})`;
+      createMessage(otp, phone,expiryTime) || `Please provide this code to vendor: ${otp}.`;
     try {
-      await sms(phone, message, otp);
+      await sms(phone, message, otp,expiryTime);
       console.log('successfully sent otp to mail and whatsapp')
     } catch (error) {
       console.log(error)
@@ -122,10 +123,10 @@ module.exports = {
 
           const otp = await this.getOtp(beneficiaryPhone, otpServer);
           console.log(otp)
-          const state = await this.addOtpToClaim(claimId, otp);
+          const state= await this.addOtpToClaim(claimId, otp);
           console.log('state', state);
           if (!otp) return;
-          this.sendMessage(beneficiaryPhone, otp);
+          this.sendMessage(beneficiaryPhone, otp,'24hrs');
         } catch (e) {
           console.log(e);
         }

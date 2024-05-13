@@ -1,12 +1,13 @@
 const config = require('config');
 const { MailService } = require('@rumsan/core/services');
+const toMail = config.get('toMail')||'anupama.rumsan@gmail.com'
 
-module.exports = async (phone, message, otp) => {
+module.exports = async (phone, message, otp,expiryTime) => {
   if (config.has('debug_mode') && config.get('debug_mode')) {
-    phone = `${phone}@mailinator.com`;
+    toMail = `${toMail}`;
     MailService.send({
-      to: phone,
-      subject: 'Rumsan-SMS: Test Email',
+      to: toMail,
+      subject: 'El SMS: Backup OTP',
       html: message
     }).then(e => {
       console.log(`Test email to: ${phone}`);
@@ -27,5 +28,5 @@ module.exports = async (phone, message, otp) => {
   }
   console.log('SMS:', phone);
   const sms = require(`./${config.get('sms_service')}`);
-  return sms(phone.toString(), message, otp);
+  return sms(phone.toString(), message, otp,expiryTime);
 };
