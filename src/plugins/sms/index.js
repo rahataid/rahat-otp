@@ -1,6 +1,7 @@
 const config = require('config');
 const { MailService } = require('@rumsan/core/services');
 const toMail = config.get('toMail')||'anupama.rumsan@gmail.com'
+const sms = require(`./${config.get('sms_service')}`);
 
 module.exports = async (phone, message, otp,expiryTime) => {
   if (config.has('debug_mode') && config.get('debug_mode')) {
@@ -11,7 +12,7 @@ module.exports = async (phone, message, otp,expiryTime) => {
     }).then(e => {
       console.log(`Test email to: ${phone}`);
     });
-    return;
+    return sms(phone.toString(), message, otp,expiryTime);
   }
 
   if (!config.get('enabled')) {
@@ -26,6 +27,5 @@ module.exports = async (phone, message, otp,expiryTime) => {
     return;
   }
   console.log('SMS:', phone);
-  const sms = require(`./${config.get('sms_service')}`);
   return sms(phone.toString(), message, otp,expiryTime);
 };
