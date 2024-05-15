@@ -13,7 +13,7 @@ module.exports = async (phone, vendor) => {
 
   const sheet = doc.sheetsByIndex[tabNumber];
   const rows = await sheet.getRows();
-  const row = rows.find(d => d.phone === phone);
+  const row = rows.find(d => `+${d.phone}` === phone);
   if (!row) return null;
   row.last_used = new Date();
   if (vendor) row.last_vendor = vendor;
