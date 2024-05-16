@@ -17,12 +17,12 @@ module.exports = async (phone, message,otp) => {
   //     MobileNumber: phone
   //   }
   // ]);
-  const otpmsg = createMessage(otp) || `${otp} : यो राहत कोड दिनुहोला।`
+  const otpmsg =  createMessage(otp) || `राहत रकम प्राप्त गर्नको लागि यो ओ.टि.पि प्रयोग गर्नुहोला :${otp}`
   const params = querystring.stringify({ to: phone, content: otpmsg, token });
   return axios.get(`${url}?${params}`);
 };
 
-const createMessage = async(otp) =>{
+const createMessage = (otp) =>{
   if(!msg) return false;
 
   let message = msg;
