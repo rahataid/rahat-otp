@@ -17,7 +17,7 @@ module.exports = async (phone, message,otp) => {
   //     MobileNumber: phone
   //   }
   // ]);
-  const otpmsg = createMessage(otp)
+  const otpmsg = createMessage(otp) || `${otp} : यो राहत कोड दिनुहोला।`
   const params = querystring.stringify({ to: phone, content: otpmsg, token });
   return axios.get(`${url}?${params}`);
 };
