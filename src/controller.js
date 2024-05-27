@@ -9,17 +9,16 @@ const pinService = require('./plugins/pin');
 
 const mailConfig = require('../config/mail.json');
 
-console.log(mailConfig)
+console.log(mailConfig);
 
 MailService.setConfig(mailConfig);
 
 const rahatServer = config.get('rahat_server');
-const websocketProvider = config.get('blockchain.webSocketProvider');
+const websocketProvider = config.get('blockchain.httpProvider');
 const privateKey = config.get('private_key');
 const { abi } = require('./abi.json');
 
-const provider = new ethers.WebSocketProvider
-(websocketProvider);
+const provider = new ethers.JsonRpcProvider(websocketProvider);
 const wallet = new ethers.Wallet(privateKey, provider);
 let currentContract = null;
 
@@ -71,13 +70,12 @@ module.exports = {
 
   async sendMessage(phone, otp, expiryTime) {
     if (phone.toString().slice(0, 3) === '999') return null;
-    const message =
-      createMessage(otp, phone,expiryTime) || `Please provide this code to vendor: ${otp}.`;
+    const message = createMessage(otp, phone, expiryTime) || `Please provide this code to vendor: ${otp}.`;
     try {
-      await sms(phone, message, otp,expiryTime);
-      console.log('successfully sent otp to mail and whatsapp')
+      await sms(phone, message, otp, expiryTime);
+      console.log('successfully sent otp to mail and whatsapp');
     } catch (error) {
-      console.log(error)
+      console.log(error);
     }
 
     return null;
@@ -101,11 +99,12 @@ module.exports = {
 
   async contractListen() {
     currentContract = await this.getContract();
-    console.log({ currentContract })
+    console.log({ currentContract });
     currentContract.on(
       'ClaimCreated',
       async (claimId, claimerAddress, claimeeAddress, tokenAddress, otpServer, amount) => {
         try {
+          console.log('here');
           console.log({
             msg: 'ClaimCreated',
             claimId,
@@ -115,18 +114,16 @@ module.exports = {
             otpServer
           });
 
-          const {
-            data
-          } = await api.get(`/v1/beneficiaries/wallet/${claimeeAddress}`);
+          const { data } = await api.get(`/v1/beneficiaries/wallet/${claimeeAddress}`);
           console.log({ phone: data?.data?.piiData?.phone });
           const beneficiaryPhone = data?.data?.piiData?.phone || '+9779841602388';
 
           const otp = await this.getOtp(beneficiaryPhone, otpServer);
-          console.log(otp)
-          const state= await this.addOtpToClaim(claimId, otp);
+          console.log(otp);
+          const state = await this.addOtpToClaim(claimId, otp);
           console.log('state', state);
           if (!otp) return;
-          this.sendMessage(beneficiaryPhone, otp,'24hrs');
+          this.sendMessage(beneficiaryPhone, otp, '24hrs');
         } catch (e) {
           console.log(e);
         }

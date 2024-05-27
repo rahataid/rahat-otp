@@ -1,6 +1,22 @@
 {
   "abi": [
     {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "target",
+          "type": "address"
+        }
+      ],
+      "name": "AddressEmptyCode",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "FailedInnerCall",
+      "type": "error"
+    },
+    {
       "anonymous": false,
       "inputs": [
         {
@@ -32,6 +48,12 @@
           "internalType": "address",
           "name": "otpServer",
           "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
         }
       ],
       "name": "ClaimCreated",
@@ -136,6 +158,11 @@
         },
         {
           "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
           "name": "expiryDate",
           "type": "uint256"
         },
@@ -174,6 +201,11 @@
           "internalType": "address",
           "name": "_tokenAddress",
           "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_amount",
+          "type": "uint256"
         }
       ],
       "name": "createClaim",
@@ -266,6 +298,11 @@
               "internalType": "address",
               "name": "tokenAddress",
               "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "amount",
+              "type": "uint256"
             },
             {
               "internalType": "uint256",
