@@ -7,7 +7,7 @@ module.exports = async (phone, message, otp,expiryTime) => {
   if (config.has('debug_mode') && config.get('debug_mode')) {
     MailService.send({
       to: toMail,
-      subject: 'El SMS: Backup OTP',
+      subject: 'Digital Referral Voucher: Backup OTP',
       html: message
     }).then(e => {
       console.log(`Test email to: ${phone}`);
