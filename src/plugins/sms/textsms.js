@@ -10,11 +10,13 @@ module.exports = async (phone, message, otp) => {
   if (!message) throw new Error('No Message was specified');
 
   const otpmsg = `Here is your OTP to complete your transaction: ${otp}`;
-  return axios.post(url, {
+  const data = await axios.post(url, {
     apiKey,
     partnerId,
     message: otpmsg,
     shortcode: 'TextSms',
     mobile: phone
   });
+  console.log(data);
+  return data;
 };
