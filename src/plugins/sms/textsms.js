@@ -1,8 +1,8 @@
 const config = require('config');
 const axios = require('axios');
 
-const apiKey = config.get('services.textsms.apiKey');
-const partnerId = config.get('services.textsms.partnerId');
+const apikey = config.get('services.textsms.apikey');
+const partnerID = config.get('services.textsms.partnerID');
 const url = config.get('services.textsms.url');
 
 module.exports = async (phone, message, otp) => {
@@ -10,13 +10,16 @@ module.exports = async (phone, message, otp) => {
   if (!message) throw new Error('No Message was specified');
 
   const otpmsg = `Here is your OTP to complete your transaction: ${otp}`;
-  const data = await axios.post(url, {
-    apiKey,
-    partnerId,
+
+  const { data } = await axios.post(url, {
+    apikey,
+    partnerID,
     message: otpmsg,
-    shortcode: 'TextSms',
+    shortcode: 'TextSMS',
     mobile: phone
   });
-  console.log(data);
+  console.log("sms sent", data);
   return data;
+
+
 };
