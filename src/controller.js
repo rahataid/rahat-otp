@@ -14,11 +14,11 @@ console.log(mailConfig);
 MailService.setConfig(mailConfig);
 
 const rahatServer = config.get('rahat_server');
-const websocketProvider = config.get('blockchain.httpProvider');
+const websocketProvider = config.get('blockchain.webSocketProvider');
 const privateKey = config.get('private_key');
 const { abi } = require('./abi.json');
 
-const provider = new ethers.JsonRpcProvider(websocketProvider);
+const provider = new ethers.WebSocketProvider(websocketProvider);
 const wallet = new ethers.Wallet(privateKey, provider);
 let currentContract = null;
 
